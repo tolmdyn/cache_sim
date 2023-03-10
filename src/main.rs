@@ -1,3 +1,5 @@
+mod cache;
+
 pub fn main() {
     //sim::process_address(0x7ff0005c8, 4, 8, 1);
     //sim::process_address(26, 4, 4, 1);
@@ -15,7 +17,7 @@ pub fn main() {
     println!("{:?}", cache);
     */
 
-    let mut direct_cache = sim::Cache::new(2, 4, 2);
+    let mut direct_cache = cache::Cache::new(2, 4, 2);
 
     direct_cache.operate(0b00001111); //miss
     direct_cache.operate(0b01011111); //miss
