@@ -8,18 +8,18 @@ use std::fmt;
     tag: u64,
     //last_access
 }*/
-
-/*enum CacheResult {
+#[derive(PartialEq)]
+pub enum CacheResult {
     Hit,
     Miss,
-    Evict
-}*/
-
-/*enum CacheInstruction {
+    Eviction,
+}
+#[derive(PartialEq)]
+pub enum CacheInstruction {
     LOAD,
     STORE,
-    MOD
-}*/
+    MODIFY,
+}
 
 #[derive(Debug)]
 struct Address {
@@ -81,25 +81,38 @@ impl Cache {
         }
     }
 
-    pub fn operate(&mut self, addr: u64) -> bool {
+    pub fn operate(&mut self, addr: u64) -> CacheResult {
         let address = self.process_address(addr);
         //println!("{:?}", address);
 
         if self.check_hit(&address) {
             //check if address is in cache and if it is move to back of queue and update "hit"
-            return true;
-        } else if self.check_miss(&address) {
+            return CacheResult::Hit;
+        } else if self.check_free(&address) {
             //if there is space in the cache then add it to cache, put in back of queue and update "miss"
-            return true;
-        } else if self.check_evict(&address) {
-            //if cache is full then evict, then add it to cache and update "full"
-            return true;
+            self.insert(&address);
+            return CacheResult::Miss;
         } else {
-            return false; //something bad has happened
+            //if cache is full then evict, then add it to cache and update "full"
+            self.evict(&address);
+            return CacheResult::Eviction;
         }
     }
+    /*
+    pub fn instruction(&mut self, addr: u64, inst: CacheInstruction) -> &[CacheResult] {
+        /*match inst {
+            CacheInstruction::LOAD=> self.operate(addr),
+            CacheInstruction::STORE=> self.operate(addr),
+            CacheInstruction::MOD=> self.operate(addr) //and then go again...
+        }*/
 
-    //pub fn instruction(%mut self, addr: u64)
+        if inst == CacheInstruction::MODIFY {
+            &[self.operate(addr), self.operate(addr)]
+        } else {
+            &[self.operate(addr)]
+        }
+
+    }*/
 
     fn process_address(&self, addr: u64) -> Address {
         //println!("0x{:x} b{:0>64b}", addr, addr);
@@ -117,12 +130,12 @@ impl Cache {
 
         Address {
             addr,
-            _tag : tag,
-            _block : block,
+            _tag: tag,
+            _block: block,
             set,
         }
     }
-
+    /* CHANGE ALL THIS TRUE FALSE NONSENSE TO SOMETHING MORE RUST-Y (RESULT?) */
     fn check_hit(&mut self, addr: &Address) -> bool {
         if let Some(set) = self.sets.get_mut(addr.set as usize) {
             if set.lines.contains(&addr.addr) {
@@ -137,6 +150,7 @@ impl Cache {
         false
     }
 
+    /*
     fn check_miss(&mut self, addr: &Address) -> bool {
         if let Some(set) = self.sets.get_mut(addr.set as usize) {
             if &set.lines.len() < &set.lines.capacity() {
@@ -146,9 +160,25 @@ impl Cache {
             }
         }
         false
+    }*/
+
+    fn check_free(&self, addr: &Address) -> bool {
+        if let Some(set) = self.sets.get(addr.set as usize) {
+            return &set.lines.len() < &set.lines.capacity();
+        }
+        panic!("Problem checking for space")
     }
 
-    fn check_evict(&mut self, addr: &Address) -> bool {
+    fn insert(&mut self, addr: &Address) -> bool {
+        if let Some(set) = self.sets.get_mut(addr.set as usize) {
+            set.lines.push_back(addr.addr);
+            self.miss += 1;
+            return true;
+        }
+        false
+    }
+
+    fn evict(&mut self, addr: &Address) -> bool {
         if let Some(set) = self.sets.get_mut(addr.set as usize) {
             if &set.lines.len() == &set.lines.capacity() {
                 set.lines.pop_front();
@@ -160,17 +190,45 @@ impl Cache {
         }
         false
     }
+    /*
+    fn check_evict(&mut self, addr: &Address) -> bool {
+        if let Some(set) = self.sets.get_mut(addr.set as usize) {
+            if &set.lines.len() == &set.lines.capacity() {
+                set.lines.pop_front();
+                set.lines.push_back(addr.addr);
+                self.evict += 1;
+
+                return true;
+            }
+        }
+        false
+    }*/
 }
 
 impl fmt::Display for Cache {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        writeln!(f, "Cache : (s:{}, b:{}, e:{})", self.set_bits, self.block_bits, self.num_lines)?;
+        writeln!(
+            f,
+            "Cache : (s:{}, b:{}, e:{})",
+            self.set_bits, self.block_bits, self.num_lines
+        )?;
 
         for s in 0..self.sets.len() {
-            writeln!(f, "{} ({}/{}): {:?}", s, &self.sets[s].lines.len(), &self.sets[s].lines.capacity(), &self.sets[s])?;
+            writeln!(
+                f,
+                "{} ({}/{}): {:?}",
+                s,
+                &self.sets[s].lines.len(),
+                &self.sets[s].lines.capacity(),
+                &self.sets[s]
+            )?;
         }
 
-        writeln!(f, "hits:{} misses:{} evictions:{}", self.miss, self.hit, self.evict)?;
+        writeln!(
+            f,
+            "hits:{} misses:{} evictions:{}",
+            self.miss, self.hit, self.evict
+        )?;
         Ok(())
     }
 }
