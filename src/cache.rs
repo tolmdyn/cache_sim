@@ -9,10 +9,16 @@ use std::fmt;
     //last_access
 }*/
 
-/*enum Result {
+/*enum CacheResult {
     Hit,
     Miss,
     Evict
+}*/
+
+/*enum CacheInstruction {
+    LOAD,
+    STORE,
+    MOD
 }*/
 
 #[derive(Debug)]
@@ -49,7 +55,7 @@ pub struct Cache {
 
     miss: u32,
     hit: u32,
-    full: u32,
+    evict: u32,
 }
 
 impl Cache {
@@ -71,7 +77,7 @@ impl Cache {
             num_lines,
             miss: 0,
             hit: 0,
-            full: 0,
+            evict: 0,
         }
     }
 
@@ -92,6 +98,8 @@ impl Cache {
             return false; //something bad has happened
         }
     }
+
+    //pub fn instruction(%mut self, addr: u64)
 
     fn process_address(&self, addr: u64) -> Address {
         //println!("0x{:x} b{:0>64b}", addr, addr);
@@ -145,7 +153,7 @@ impl Cache {
             if &set.lines.len() == &set.lines.capacity() {
                 set.lines.pop_front();
                 set.lines.push_back(addr.addr);
-                self.full += 1;
+                self.evict += 1;
 
                 return true;
             }
@@ -162,7 +170,7 @@ impl fmt::Display for Cache {
             writeln!(f, "{} ({}/{}): {:?}", s, &self.sets[s].lines.len(), &self.sets[s].lines.capacity(), &self.sets[s])?;
         }
 
-        writeln!(f, "Miss:{}, Hit:{}, Evictions:{}", self.miss, self.hit, self.full)?;
+        writeln!(f, "hits:{} misses:{} evictions:{}", self.miss, self.hit, self.evict)?;
         Ok(())
     }
 }
