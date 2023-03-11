@@ -32,8 +32,9 @@ pub enum CacheInstruction {
     Modify,
 }
 
-#[allow(dead_code)]
+
 #[derive(Debug)]
+#[allow(dead_code)]
 struct Address {
     addr: u64,
     tag: u64,
@@ -56,8 +57,7 @@ impl Set {
 
 #[derive(Debug)]
 pub struct Cache {
-    //sets: Vec<Set>,
-    sets: Box<[Set]>,
+    sets: Box<[Set]>, //sets: Vec<Set>,
 
     set_bits: u64,   //(s)
     block_bits: u64, //(b)
@@ -77,8 +77,6 @@ impl Cache {
         for _ in 0..set_num {
             new_sets.push(Set::new(num_lines));
         }
-
-        //println!("{} {}", set_num, new_sets.len());
         let set_box = new_sets.into_boxed_slice(); //cast it into a boxed slice as we don't need to resize it anymore
 
         Self {
