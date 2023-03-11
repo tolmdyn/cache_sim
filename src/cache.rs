@@ -8,8 +8,7 @@ use std::fmt;
     tag: u64,
     //last_access
 }*/
-
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum CacheResult {
     Hit,
     Miss,
@@ -28,9 +27,9 @@ impl fmt::Display for CacheResult {
 #[derive(PartialEq)]
 #[allow(dead_code)]
 pub enum CacheInstruction {
-    LOAD,
-    STORE,
-    MODIFY,
+    Load,
+    Store,
+    Modify,
 }
 
 #[allow(dead_code)]
@@ -93,7 +92,7 @@ impl Cache {
         }
     }
 
-    pub fn operate(&mut self, addr: u64) -> Result<String, String> {
+    pub fn operate(&mut self, addr: u64) -> Result<Vec<CacheResult>, String> {
         let address = self.process_address(addr);
         //println!("{:?}", address);
         let mut result = Vec::new();
@@ -103,7 +102,6 @@ impl Cache {
             result.push(res);
             //Ok(self.update(&address)?) //return CacheResult::Hit;
         } else {
-            
             if self.check_free(&address)? { //if there is space in the cache then add it to cache, put in back of queue and update "miss"
             //result.push(Cache::Result)
             Ok(self.insert(&address)?) ////return CacheResult::Miss;
@@ -114,30 +112,24 @@ impl Cache {
         }*/
 
         if self.check_hit(&address)? {
-            result.push(CacheResult::Hit.to_string());
+            result.push(CacheResult::Hit);
             self.update(&address)?;
         } else {
-            result.push(CacheResult::Miss.to_string());
+            result.push(CacheResult::Miss);
             if self.check_free(&address)? {
                 self.insert(&address)?;
             } else {
-                result.push(CacheResult::Eviction.to_string());
+                result.push(CacheResult::Eviction);
                 self.evict(&address)?;
             }
         }
 
-        //let s = result.into_iter();
-        //let sc :String = s.collect();
+        /*
+        let s: Vec<String> = e.iter().map(|x| x.to_string()).collect();
+        s.join(" ");
+        */
 
-        //let mut s = String::new();
-
-        //for r in result{
-        //    s.
-        //    println!(r);
-        //}
-
-        //let a = result[0].to_string();
-        Ok(result.join(" "))
+        Ok(result)
 
     }
     /*
@@ -259,4 +251,6 @@ impl fmt::Display for Cache {
         write!(f, "{}", self.set_bits, self.block_bits, self.num_lines)
     }
 }*/
+
+
 
