@@ -15,6 +15,16 @@ pub enum CacheResult {
     Miss,
     Eviction,
 }
+impl fmt::Display for CacheResult {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            CacheResult::Hit => write!(f, "hit"),
+            CacheResult::Miss => write!(f, "miss"),
+            CacheResult::Eviction => write!(f, "eviction"),
+        }
+    }
+}
+
 #[derive(PartialEq)]
 #[allow(dead_code)]
 pub enum CacheInstruction {
@@ -83,23 +93,52 @@ impl Cache {
         }
     }
 
-    pub fn operate(&mut self, addr: u64) -> Result<CacheResult, String> {
+    pub fn operate(&mut self, addr: u64) -> Result<String, String> {
         let address = self.process_address(addr);
         //println!("{:?}", address);
-
-        if self.check_hit(&address).unwrap() {
-            //check if address is in cache and if it is move to back of queue and update "hit"
-            Ok(self.update(&address)?) //return CacheResult::Hit;
-        } else if self.check_free(&address).unwrap() {
-            //if there is space in the cache then add it to cache, put in back of queue and update "miss"
+        let mut result = Vec::new();
+        /*
+        if self.check_hit(&address).unwrap() { //check if address is in cache and if it is move to back of queue and update "hit"
+            let res = self.update(&address)?;
+            result.push(res);
+            //Ok(self.update(&address)?) //return CacheResult::Hit;
+        } else {
+            
+            if self.check_free(&address)? { //if there is space in the cache then add it to cache, put in back of queue and update "miss"
+            //result.push(Cache::Result)
             Ok(self.insert(&address)?) ////return CacheResult::Miss;
             
         } else {
             //if cache is full then evict, then add it to cache and update "full"
             Ok(self.evict(&address)?) //return CacheResult::Eviction;
+        }*/
+
+        if self.check_hit(&address)? {
+            result.push(CacheResult::Hit.to_string());
+            self.update(&address)?;
+        } else {
+            result.push(CacheResult::Miss.to_string());
+            if self.check_free(&address)? {
+                self.insert(&address)?;
+            } else {
+                result.push(CacheResult::Eviction.to_string());
+                self.evict(&address)?;
+            }
         }
 
-        
+        //let s = result.into_iter();
+        //let sc :String = s.collect();
+
+        //let mut s = String::new();
+
+        //for r in result{
+        //    s.
+        //    println!(r);
+        //}
+
+        //let a = result[0].to_string();
+        Ok(result.join(" "))
+
     }
     /*
     pub fn instruction(&mut self, addr: u64, inst: CacheInstruction) -> &[CacheResult] {
@@ -144,15 +183,14 @@ impl Cache {
         Err("Problem checking for hit".to_string())
     }
 
-    fn update(&mut self, addr: &Address) -> Result<CacheResult, String> {
-        //if the item is in cache then update the LRU
-
+    fn update(&mut self, addr: &Address) -> Result<(), String> { //if the item is in cache then update the LRU
         if let Some(set) = self.sets.get_mut(addr.set as usize) {
             self.hit += 1;
             let index = set.lines.iter().position(|&x| x == addr.addr);
             set.lines.remove(index.unwrap());
             set.lines.push_back(addr.addr);
-            return Ok(CacheResult::Hit);
+            //return Ok(CacheResult::Hit);
+            return Ok(())
         }
 
         Err("Cache does not contain address.".to_string())
@@ -165,23 +203,23 @@ impl Cache {
         Err("Problem checking for a free space".to_string())
     }
 
-    fn insert(&mut self, addr: &Address) -> Result<CacheResult, String> {
+    fn insert(&mut self, addr: &Address) -> Result<(), String> {
         if let Some(set) = self.sets.get_mut(addr.set as usize) {
             set.lines.push_back(addr.addr);
             self.miss += 1;
-            return Ok(CacheResult::Miss)
+            return Ok(())
         }
         Err("Cannot insert into cache".to_string())
     }
 
-    fn evict(&mut self, addr: &Address) -> Result<CacheResult, String> {
+    fn evict(&mut self, addr: &Address) -> Result<(), String> {
         if let Some(set) = self.sets.get_mut(addr.set as usize) {
             if &set.lines.len() == &set.lines.capacity() {
                 set.lines.pop_front();
                 set.lines.push_back(addr.addr);
                 self.evict += 1;
 
-                return Ok(CacheResult::Eviction)
+                return Ok(())
             }
         }
         Err("Cannot evict from cache".to_string())
@@ -222,28 +260,3 @@ impl fmt::Display for Cache {
     }
 }*/
 
-/*
-pub fn process_address_info(addr: u64, set_bits: u64, block_bits: u64, num_lines: u32) {
-    //->line {}
-    println!("s:{set_bits}, b:{block_bits}, E:{num_lines}");
-    println!(
-        "S (set size):{}, B (block size):{}, E:{num_lines}",
-        1 << set_bits,
-        1 << block_bits
-    );
-    println!("0x{:x} b{:0>64b}", addr, addr);
-
-    //let blockmask:u64 = u64::pow(2, block_bits.try_into().unwrap())-1;
-    let blockmask: u64 = (1 << block_bits) - 1;
-    let block: u64 = addr & blockmask;
-
-    //let setmask:u64 = u64::pow(2, (set_bits + block_bits).try_into().unwrap())-1;
-    let setmask: u64 = (1 << set_bits + block_bits) - 1;
-    let set: u64 = (addr & setmask) >> block_bits;
-
-    println!(
-        "blockmask:{:b}, block:{:b}\nsetmask:{:b}, set:{:b}\n",
-        blockmask, block, setmask, set
-    );
-}
-*/

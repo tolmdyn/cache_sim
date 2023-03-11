@@ -30,6 +30,8 @@ pub fn main() {
     direct_cache.operate(0b101100001111); //full
 
     //println!("{:?}", direct_cache);
+
+    println!("{}", direct_cache.operate(0b00001111).unwrap());
     println!("{}", direct_cache);
 }
 
