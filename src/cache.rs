@@ -87,7 +87,7 @@ impl Cache {
     pub fn operate(&mut self, addr: u64) -> Result<Vec<CacheResult>, String> {
         let address = self.process_address(addr);
         let mut result = Vec::new();
-    
+
         if self.check_hit(&address)? {
             result.push(CacheResult::Hit);
             self.update(&address)?;
@@ -147,12 +147,12 @@ impl Cache {
     /* Check if the tag is in cache */
     fn check_hit(&mut self, addr: &Address) -> Result<bool, String> {
         if let Some(set) = self.sets.get(addr.set as usize) {
-            if set.lines.contains(&addr.tag){
+            if set.lines.contains(&addr.tag) {
                 self.hit += 1;
-                return Ok(true)
+                return Ok(true);
             } else {
                 self.miss += 1;
-                return Ok(false)
+                return Ok(false);
             }
         }
         Err("Problem checking for hit".to_string())
@@ -198,7 +198,7 @@ impl Cache {
         Err("Cannot evict from cache".to_string())
     }
 
-    pub fn cache_results(&self) -> String{
+    pub fn cache_results(&self) -> String {
         format!(
             "hits:{} misses:{} evictions:{}",
             self.hit, self.miss, self.evict
@@ -234,7 +234,6 @@ impl fmt::Display for Cache {
     }
 }
 
-
 /*impl fmt::Display for Vec<Set> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.set_bits, self.block_bits, self.num_lines)
@@ -263,14 +262,7 @@ fn process_address_static(addr: u64, set_bits: u64, block_bits: u64) -> Address 
 
 #[cfg(test)]
 mod tests {
-    use crate::cache::Cache;
-
-    use super::{process_address_static, CacheInstruction};
-
-    #[test]
-    fn dummy() {
-        assert_eq!(2 + 2, 4);
-    }
+    use crate::cache::{process_address_static, Cache, CacheInstruction};
 
     #[test]
     fn test_address_process() {
@@ -346,6 +338,5 @@ mod tests {
         assert_eq!(cache.hit, 4);
         assert_eq!(cache.miss, 5);
         assert_eq!(cache.evict, 2);
-
     }
 }
