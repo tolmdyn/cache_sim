@@ -16,7 +16,7 @@ pub fn main() {
 
     println!("{:?}", cache);
     */
-
+/* 
     let mut direct_cache = cache::Cache::new(2, 4, 2);
 
     direct_cache.operate(0b00001111); //miss
@@ -33,6 +33,7 @@ pub fn main() {
 
     println!("{:?}", direct_cache.operate(0b00001111).unwrap());
     println!("{}", direct_cache);
+    */
 }
 
 
