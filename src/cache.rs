@@ -23,6 +23,7 @@ pub enum CacheInstruction {
     Load,
     Store,
     Modify,
+    Instruction
 }
 
 #[derive(Debug)]
@@ -114,13 +115,14 @@ impl Cache {
     /* Execute an instruction on the cache */
     pub fn instruction(&mut self, inst: &CacheInstruction, addr: &u64) -> Vec<CacheResult> {
         //Re-write to not eat possible result err
-
-        if *inst == CacheInstruction::Modify {
+        if *inst == CacheInstruction::Load || *inst == CacheInstruction::Store {
+            self.operate(*addr).unwrap()
+        } else if *inst == CacheInstruction::Modify {
             let mut x = self.operate(*addr).unwrap();
             x.extend(self.operate(*addr).unwrap());
             x
         } else {
-            self.operate(*addr).unwrap()
+            vec!()
         }
     }
 
