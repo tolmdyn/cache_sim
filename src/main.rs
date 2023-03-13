@@ -6,16 +6,9 @@ mod fileio;
 const FILENAME: &str = "../traces/yi.trace";
 
 pub fn main() {
-    let cache = process_input_file(FILENAME, 4, 4, 2);
+    let mut cache = cache::Cache::new(4, 4, 2);
 
-    println!("{}", cache.unwrap().cache_results());
+    process_input_file(FILENAME, &mut cache, true).unwrap();
+
+    println!("{}", cache.cache_results());
 }
-
-
-
-
-
-
-
-
-

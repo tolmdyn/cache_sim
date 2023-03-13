@@ -4,29 +4,29 @@
 
 //use std::process;
 
-
-use std::fs;
 use std::error;
-use std::io::{BufReader, BufRead};
+use std::fs;
+use std::io::{BufRead, BufReader};
 
 use crate::cache;
 #[derive(Debug)]
-pub struct Cmd{
+pub struct Cmd {
     inst: cache::CacheInstruction,
-    address: u64
+    address: u64,
 }
 
-//maybe this should take a mutable ref to the cache
-pub fn process_input_file(filepath: &str, set_bits: u64, block_bits: u64, num_lines:u32) -> Result<cache::Cache, Box<dyn error::Error>> {
+//maybe this should take a mutable ref to a cache created elsewhere
+//pub fn process_input_file(filepath: &str, set_bits: u64, block_bits: u64, num_lines:u32) -> Result<cache::Cache, Box<dyn error::Error>> {
+pub fn process_input_file(
+    filepath: &str,
+    cache: &mut cache::Cache,
+    verbose: bool,
+) -> Result<(), Box<dyn error::Error>> {
     let file = fs::File::open(filepath)?;
     let reader = BufReader::new(file);
 
-    let mut cache = cache::Cache::new(set_bits, block_bits, num_lines);
-
-    for line in reader.lines(){
+    for line in reader.lines() {
         let fline = line.unwrap(); //hmm
-
-        
 
         let cmd = line_to_command(&fline);
 
@@ -34,52 +34,52 @@ pub fn process_input_file(filepath: &str, set_bits: u64, block_bits: u64, num_li
             continue;
         }
 
-        let result = cache.instruction(&cmd.inst, &cmd.address); //do cache stuff
+        let result = cache.run_instruction(&cmd.inst, &cmd.address);
         //println!("{} {:?} {:x}", fline, cmd.inst, cmd.address);
-        println!("{} {:?}", &fline[1..], result);
-        
 
+        if verbose {
+            let result_string: Vec<String> = result.iter().map(|x| x.to_string()).collect();
+            println!("{} {}", &fline[1..], result_string.join(" "));
+        }
     }
 
-    Ok(cache) //return the "result"
+    Ok(())
 }
 
 fn line_to_command(line: &str) -> Cmd {
-    let item: Vec<&str> = line.split([' ',',']).filter(|&x| x != "").collect();
-    
+    let item: Vec<&str> = line.split([' ', ',']).filter(|&x| x != "").collect();
+
     //println!("{:?}", item);
 
     let inst = str_to_inst(item[0]);
     let address = u64::from_str_radix(item[1], 16).unwrap();
-    
-    Cmd {
-        inst,
-        address
-    }
+
+    Cmd { inst, address }
 }
 
 fn str_to_inst(c: &str) -> cache::CacheInstruction {
-    //println!("{}", c);
-
     match c {
         "I" => cache::CacheInstruction::Instruction,
         "L" => cache::CacheInstruction::Load,
         "S" => cache::CacheInstruction::Store,
         "M" => cache::CacheInstruction::Modify,
-        _ => panic!("Bad instruction")
+        _ => panic!("Unrecognised instruction"),
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{cache::{CacheInstruction}, fileio::process_input_file};
+    use crate::{
+        cache::{self, CacheInstruction},
+        fileio::process_input_file,
+    };
 
     #[test]
     fn line_to_command_test() {
         let cmd_string = "L  ffff,2";
 
         let cmd = crate::fileio::line_to_command(cmd_string);
-        
+
         println!("{:?} {}", cmd.inst, cmd.address);
 
         assert_eq!(CacheInstruction::Load, cmd.inst);
@@ -90,10 +90,21 @@ mod tests {
     fn process_input_file_test() {
         const FILENAME: &str = "../traces/yi.trace";
 
-        let cache = process_input_file(FILENAME, 4, 4, 2);
+        let mut cache = cache::Cache::new(4, 4, 2);
 
-        println!("{}", cache.unwrap().cache_results());
+        process_input_file(FILENAME, &mut cache, true).unwrap();
 
+        println!("{}", cache.cache_results());
+    }
 
+    #[test]
+    fn process_input_file_test_long() {
+        const FILENAME: &str = "../traces/long.trace";
+
+        let mut cache = cache::Cache::new(4, 4, 10);
+
+        process_input_file(FILENAME, &mut cache, false).unwrap();
+
+        println!("{}", cache.cache_results());
     }
 }

@@ -84,21 +84,21 @@ impl Cache {
         }
     }
 
-    /* Perform atomic cache operation */
-    pub fn operate(&mut self, addr: u64) -> Result<Vec<CacheResult>, String> {
+    /* Perform single cache access */
+    pub fn operate(&mut self, addr: u64) -> Vec<CacheResult> {
         let address = self.process_address(addr);
         let mut result = Vec::new();
 
-        if self.check_hit(&address)? {
+        if self.check_hit(&address) {
             result.push(CacheResult::Hit);
-            self.update(&address)?;
+            self.update(&address);
         } else {
             result.push(CacheResult::Miss);
-            if self.check_free(&address)? {
-                self.insert(&address)?;
+            if self.check_free(&address) {
+                self.insert(&address);
             } else {
                 result.push(CacheResult::Eviction);
-                self.evict(&address)?;
+                self.evict(&address);
             }
         }
 
@@ -109,17 +109,17 @@ impl Cache {
         s.join(" ");
         */
 
-        Ok(result)
+        result
     }
 
-    /* Execute an instruction on the cache */
-    pub fn instruction(&mut self, inst: &CacheInstruction, addr: &u64) -> Vec<CacheResult> {
+    /* Execute an instruction on the cache, return a vector containing the results */
+    pub fn run_instruction(&mut self, inst: &CacheInstruction, addr: &u64) -> Vec<CacheResult> {
         //Re-write to not eat possible result err
         if *inst == CacheInstruction::Load || *inst == CacheInstruction::Store {
-            self.operate(*addr).unwrap()
+            self.operate(*addr)
         } else if *inst == CacheInstruction::Modify {
-            let mut x = self.operate(*addr).unwrap();
-            x.extend(self.operate(*addr).unwrap());
+            let mut x = self.operate(*addr);
+            x.extend(self.operate(*addr));
             x
         } else {
             vec!()
@@ -147,57 +147,57 @@ impl Cache {
     }
 
     /* Check if the tag is in cache */
-    fn check_hit(&mut self, addr: &Address) -> Result<bool, String> {
+    fn check_hit(&mut self, addr: &Address) -> bool {
         if let Some(set) = self.sets.get(addr.set as usize) {
             if set.lines.contains(&addr.tag) {
                 self.hit += 1;
-                return Ok(true);
+                return true;
             } else {
                 self.miss += 1;
-                return Ok(false);
+                return false;
             }
         }
-        Err("Problem checking for hit".to_string())
+        panic!("Problem checking for hit");
     }
     /* Re-insert tag to update the LRU */
-    fn update(&mut self, addr: &Address) -> Result<(), String> {
+    fn update(&mut self, addr: &Address) {
         if let Some(set) = self.sets.get_mut(addr.set as usize) {
             let index = set.lines.iter().position(|&x| x == addr.tag);
             set.lines.remove(index.unwrap());
             set.lines.push_back(addr.tag);
-            return Ok(());
+            return;
         }
-        Err("Cache does not contain address.".to_string())
+        panic!("Cache does not contain address.");
     }
 
     /* Check for a free space in the set */
-    fn check_free(&self, addr: &Address) -> Result<bool, String> {
+    fn check_free(&self, addr: &Address) -> bool {
         if let Some(set) = self.sets.get(addr.set as usize) {
-            return Ok(&set.lines.len() < &set.lines.capacity());
+            return &set.lines.len() < &set.lines.capacity();
         }
-        Err("Problem checking for a free space".to_string())
+        panic!("Problem checking for a free space");
     }
 
     /* Insert the tag into set */
-    fn insert(&mut self, addr: &Address) -> Result<(), String> {
+    fn insert(&mut self, addr: &Address) {
         if let Some(set) = self.sets.get_mut(addr.set as usize) {
             set.lines.push_back(addr.tag);
-            return Ok(());
+            return;
         }
-        Err("Cannot insert into cache".to_string())
+        panic!("Cannot insert into cache");
     }
 
     /* Evict the LRU tag from a test */
-    fn evict(&mut self, addr: &Address) -> Result<(), String> {
+    fn evict(&mut self, addr: &Address) {
         if let Some(set) = self.sets.get_mut(addr.set as usize) {
             if &set.lines.len() == &set.lines.capacity() {
                 set.lines.pop_front();
                 set.lines.push_back(addr.tag);
                 self.evict += 1;
-                return Ok(());
+                return;
             }
         }
-        Err("Cannot evict from cache".to_string())
+        panic!("Cannot evict from cache");
     }
 
     pub fn cache_results(&self) -> String {
@@ -235,12 +235,6 @@ impl fmt::Display for Cache {
         Ok(())
     }
 }
-
-/*impl fmt::Display for Vec<Set> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.set_bits, self.block_bits, self.num_lines)
-    }
-}*/
 
 #[allow(dead_code)]
 fn process_address_static(addr: u64, set_bits: u64, block_bits: u64) -> Address {
@@ -295,7 +289,7 @@ mod tests {
         let mut direct_cache = Cache::new(2, 4, 2);
 
         for addr in addrs {
-            let result = direct_cache.operate(addr).unwrap();
+            let result = direct_cache.operate(addr);
             println!("{} {:?}", addr, result);
         }
 
@@ -309,7 +303,7 @@ mod tests {
         let mut cache = Cache::new(4, 4, 2);
 
         for addr in addrs {
-            let result = cache.operate(addr).unwrap();
+            let result = cache.operate(addr);
             println!("{:>10b} {:?}", addr, result);
         }
     }
@@ -329,11 +323,9 @@ mod tests {
         let mut cache = Cache::new(4, 4, 2);
 
         for addr in addrs {
-            let result = cache.instruction(&addr.0, &addr.1);
+            let result = cache.run_instruction(&addr.0, &addr.1);
             println!("{:?} {:x} {:?}", &addr.0, &addr.1, result);
         }
-
-        //println!("{}", cache);
 
         println!("{}", cache.cache_results());
 
