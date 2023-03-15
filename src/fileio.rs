@@ -1,28 +1,28 @@
-//use std::{fs, io::BufReader, error};
-
-//use crate::cache::{Cache, CacheInstruction, self};
-
-//use std::process;
-
 use std::error;
 use std::fs;
 use std::io::{BufRead, BufReader};
-
 use crate::cache;
+use sim::fail_with_message;
+
 #[derive(Debug)]
 pub struct Cmd {
     inst: cache::CacheInstruction,
     address: u64,
 }
 
-//maybe this should take a mutable ref to a cache created elsewhere
-//pub fn process_input_file(filepath: &str, set_bits: u64, block_bits: u64, num_lines:u32) -> Result<cache::Cache, Box<dyn error::Error>> {
 pub fn process_input_file(
     filepath: &str,
     cache: &mut cache::Cache,
     verbose: bool,
 ) -> Result<(), Box<dyn error::Error>> {
-    let file = fs::File::open(filepath)?;
+    let file = fs::File::open(filepath);
+
+    let file = match file {
+        Ok(r) => r,
+        Err(_) => fail_with_message(&format!("{}: No such file or directory ", filepath).to_string()),
+
+    };
+    
     let reader = BufReader::new(file);
 
     for line in reader.lines() {
@@ -66,6 +66,7 @@ fn str_to_inst(c: &str) -> cache::CacheInstruction {
         _ => panic!("Unrecognised instruction"),
     }
 }
+
 
 #[cfg(test)]
 mod tests {
