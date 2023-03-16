@@ -2,7 +2,7 @@ use std::error;
 use std::fs;
 use std::io::{BufRead, BufReader};
 use crate::cache;
-use sim::fail_with_message;
+//use sim::fail_with_message;
 
 #[derive(Debug)]
 pub struct Cmd {
@@ -19,7 +19,7 @@ pub fn process_input_file(
 
     let file = match file {
         Ok(r) => r,
-        Err(_) => fail_with_message(&format!("{}: No such file or directory ", filepath).to_string()),
+        Err(_) => fail_filepath(&format!("{}: No such file or directory ", filepath)),
 
     };
     
@@ -67,6 +67,10 @@ fn str_to_inst(c: &str) -> cache::CacheInstruction {
     }
 }
 
+fn fail_filepath(message: &str) -> ! {
+    eprintln!("{}", message);
+    std::process::exit(1);
+}
 
 #[cfg(test)]
 mod tests {
