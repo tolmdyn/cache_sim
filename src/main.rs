@@ -11,4 +11,3 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("{}", cache.cache_results());
     Ok(())
 }
-

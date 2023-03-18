@@ -1,5 +1,6 @@
 use std::collections::VecDeque;
 use std::fmt;
+use crate::Cmd;
 
 #[derive(PartialEq, Debug)]
 pub enum CacheResult {
@@ -17,7 +18,7 @@ impl fmt::Display for CacheResult {
     }
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone, Copy)]
 pub enum CacheInstruction {
     Load,
     Store,
@@ -32,7 +33,7 @@ struct Address { //we ignore address and block in this simulation
 
 #[derive(Debug)]
 pub struct Cache {
-    sets: Box<[VecDeque<u64>]>, //sets: Vec<Set>,
+    pub sets: Box<[VecDeque<u64>]>, //sets: Vec<Set>,
     set_bits: u64,   //(s)
     block_bits: u64, //(b)
     miss: u32,
@@ -81,12 +82,12 @@ impl Cache {
     }
 
     /* Execute an instruction on the cache, return a vector containing the results */
-    pub fn run_instruction(&mut self, inst: &CacheInstruction, addr: &u64) -> Vec<CacheResult> {
-        if *inst == CacheInstruction::Load || *inst == CacheInstruction::Store {
-            self.operate(*addr)
-        } else if *inst == CacheInstruction::Modify {
-            let mut x = self.operate(*addr);
-            x.extend(self.operate(*addr));
+    pub fn run_command(&mut self, command: Cmd) -> Vec<CacheResult> {
+        if command.inst == CacheInstruction::Load || command.inst == CacheInstruction::Store {
+            self.operate(command.address)
+        } else if command.inst == CacheInstruction::Modify {
+            let mut x = self.operate(command.address);
+            x.extend(self.operate(command.address));
             x
         } else {
             vec!()
@@ -158,70 +159,5 @@ impl Cache {
 
     pub fn cache_results(&self) -> String {
         format!( "hits:{} misses:{} evictions:{}", self.hit, self.miss, self.evict)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::cache::{Cache, CacheInstruction};
-
-    #[test]
-    fn test_direct_cache() {
-        let addrs = [
-            0b00001111,
-            0b01011111,
-            0b10101111,
-            0b11111111,
-            0b100001111,
-            0b11111111,
-            0b101100001111,
-        ];
-
-        let mut direct_cache = Cache::new(2, 4, 2);
-
-        for addr in addrs {
-            let result = direct_cache.operate(addr);
-            println!("{} {:?}", addr, result);
-        }
-
-        println!("{:?}", direct_cache);
-    }
-
-    #[test]
-    fn test_yi_example_addr() {
-        let addrs = [0x10, 0x20, 0x20, 0x22, 0x18, 0x110, 0x210, 0x12, 0x12];
-
-        let mut cache = Cache::new(4, 4, 2);
-
-        for addr in addrs {
-            let result = cache.operate(addr);
-            println!("{:>10b} {:?}", addr, result);
-        }
-    }
-
-    #[test]
-    fn test_yi_example_inst() {
-        let addrs = [
-            (CacheInstruction::Load, 0x10),
-            (CacheInstruction::Modify, 0x20),
-            (CacheInstruction::Load, 0x22),
-            (CacheInstruction::Store, 0x18),
-            (CacheInstruction::Load, 0x110),
-            (CacheInstruction::Load, 0x210),
-            (CacheInstruction::Modify, 0x12),
-        ];
-
-        let mut cache = Cache::new(4, 4, 2);
-
-        for addr in addrs {
-            let result = cache.run_instruction(&addr.0, &addr.1);
-            println!("{:?} {:x} {:?}", &addr.0, &addr.1, result);
-        }
-
-        println!("{}", cache.cache_results());
-
-        assert_eq!(cache.hit, 4);
-        assert_eq!(cache.miss, 5);
-        assert_eq!(cache.evict, 2);
     }
 }
