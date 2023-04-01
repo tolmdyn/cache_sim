@@ -1,4 +1,4 @@
 Number of source code lines:
- 281 ../src/lib.rs
+ 270 ../src/lib.rs
   12 ../src/main.rs
- 293 total
+ 282 total
