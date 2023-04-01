@@ -27,11 +27,8 @@ pub fn process_input_file(filepath: &str, cache: &mut Cache, verbose: bool) -> R
     for line in BufReader::new(file).lines() {
         let line = line?;
         let cmd = line_to_command(&line);
-
         if cmd.is_none() || cmd.unwrap().inst == CacheInstruction::Instruction { continue }
-
         let result = cache.run_command(cmd.unwrap());
-
         if verbose {
             println!("{} {}", &line[1..], result.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(" "));
         }
@@ -63,7 +60,6 @@ fn str_to_inst(c: &str) -> Option<CacheInstruction> {
 pub fn process_args(args: &[String]) -> Result<ArgFlags, Box<dyn Error>> {
     let program = args[0].clone();
     let mut opts = Options::new();
-
     opts.optflag("h", "help", "Print this help message.");
     opts.optflag("v", "verbose", "Optional verbose flag.");
     opts.reqopt("s", "", "Number of set index bits.", "num");
@@ -75,29 +71,24 @@ pub fn process_args(args: &[String]) -> Result<ArgFlags, Box<dyn Error>> {
         print_usage(&program, &opts);
         std::process::exit(1);
     }
-
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => m,
         Err(e) => fail_with_message(&format!("Error: {}", e.to_string()), &program, &opts), 
     };
-
     let v_flag =  matches.opt_present("v");
 
     let s_flag:u64 = match matches.opt_get("s"){
         Ok(f) => f.unwrap(),
         Err(_e) => fail_with_message("Missing required command line argument -s", &program, &opts)
     };
-    
     let b_flag:u64 = match matches.opt_get("b"){
         Ok(f) => f.unwrap(),
         Err(_e) => fail_with_message("Missing required command line argument -b", &program, &opts)
     };
-
     let e_flag:u32 = match matches.opt_get("E"){
         Ok(f) => f.unwrap(),
         Err(_e) => fail_with_message("Missing required command line argument -E", &program, &opts)
     };
-    
     let t_flag = matches.opt_str("t").unwrap();
 
     Ok(ArgFlags {
@@ -165,7 +156,6 @@ impl Cache {
     pub fn new(set_bits: u64, block_bits: u64, num_lines: u32) -> Cache {
         let set_num = 1 << set_bits;
         let mut new_sets = Vec::with_capacity(set_num);
-
         for _ in 0..set_num {
             new_sets.push(Vec::with_capacity(num_lines as usize));
         }
@@ -184,7 +174,6 @@ impl Cache {
     pub fn operate(&mut self, addr: u64) -> Vec<CacheResult> {
         let address = self.process_address(addr);
         let mut result = Vec::new();
-
         if self.check_hit(&address) {
             result.push(CacheResult::Hit);
             self.update(&address);
