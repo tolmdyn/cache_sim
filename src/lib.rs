@@ -108,6 +108,7 @@ pub fn fail_with_message(message: &str, program: &str, opts: &Options) -> ! {
 
 fn print_usage(program: &str, opts: &Options) {
     print!("{}", opts.usage(&format!("Usage: {} [-hv] -s <num> -E <num> -b <num> -t <file>", program)));
+    println!("\nExamples:\n    linux>  {} -s 4 -E 1 -b 4 -t traces/yi.trace\n    linux>  {} -v -s 8 -E 2 -b 4 -t traces/yi.trace", program, program);
 }
 
 /* CACHE */
