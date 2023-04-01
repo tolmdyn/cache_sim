@@ -1,5 +1,4 @@
 Number of source code lines:
- 162 ../src/cache.rs
- 119 ../src/lib.rs
+ 281 ../src/lib.rs
   12 ../src/main.rs
  293 total

@@ -1,5 +1,5 @@
 use std::env;
-use sim::{ process_args, process_input_file, cache::Cache };
+use sim::{ process_args, process_input_file, Cache };
 
 pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
